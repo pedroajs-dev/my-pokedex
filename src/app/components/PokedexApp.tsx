@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Pokemon } from '@/lib/types';
 import { BATCH } from '@/lib/constants';
 import Header from './Header';
@@ -17,6 +17,35 @@ export default function PokedexApp({ initialPokemon, totalCount }: Props) {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pokemonFavorites');
+      if (saved) {
+        setFavorites(JSON.parse(saved));
+      }
+    }
+  }, []);
+
+  // Save favorites to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pokemonFavorites', JSON.stringify(favorites));
+    }
+  }, [favorites]);
+
+  const toggleFavorite = useCallback((pokemonId: number) => {
+    setFavorites(prev => {
+      if (prev.includes(pokemonId)) {
+        return prev.filter(id => id !== pokemonId);
+      } else {
+        return [...prev, pokemonId];
+      }
+    });
+  }, []);
 
   const loadMore = useCallback(async () => {
     if (loading || offset >= totalCount) return;
@@ -33,16 +62,38 @@ export default function PokedexApp({ initialPokemon, totalCount }: Props) {
   }, [loading, offset, totalCount]);
 
   const filteredPokemon = useMemo(() => {
+    let result = pokemon;
+
+    // Filter by favorites if enabled
+    if (showOnlyFavorites) {
+      result = result.filter(entry => favorites.includes(entry.id));
+    }
+
+    // Filter by search query
     const query = search.trim().toLowerCase();
-    if (!query) return pokemon;
-    return pokemon.filter((entry) => entry.name.includes(query) || String(entry.id).includes(query));
-  }, [pokemon, search]);
+    if (query) {
+      result = result.filter((entry) => entry.name.includes(query) || String(entry.id).includes(query));
+    }
+
+    return result;
+  }, [pokemon, search, showOnlyFavorites, favorites]);
+
+  const handleRandomPokemon = useCallback(() => {
+    if (pokemon.length === 0) return;
+    const randomIndex = Math.floor(Math.random() * pokemon.length);
+    const randomPokemon = pokemon[randomIndex];
+    setSelectedId(randomPokemon.id);
+  }, [pokemon]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#0d0e1a]">
       <Header
         search={search}
         onSearch={setSearch}
+        onRandom={handleRandomPokemon}
+        showOnlyFavorites={showOnlyFavorites}
+        onToggleFavoritesFilter={setShowOnlyFavorites}
+        favoriteCount={favorites.length}
         loadedCount={pokemon.length}
         totalCount={totalCount}
       />
@@ -60,6 +111,8 @@ export default function PokedexApp({ initialPokemon, totalCount }: Props) {
                 pokemon={entry}
                 isSelected={selectedId === entry.id}
                 onClick={() => setSelectedId((current) => (current === entry.id ? null : entry.id))}
+                isFavorite={favorites.includes(entry.id)}
+                onToggleFavorite={() => toggleFavorite(entry.id)}
               />
             ))}
           </div>

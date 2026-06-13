@@ -3,11 +3,24 @@
 interface HeaderProps {
   search: string;
   onSearch: (value: string) => void;
+  onRandom: () => void;
+  showOnlyFavorites: boolean;
+  onToggleFavoritesFilter: (show: boolean) => void;
+  favoriteCount: number;
   loadedCount: number;
   totalCount: number;
 }
 
-export default function Header({ search, onSearch, loadedCount, totalCount }: HeaderProps) {
+export default function Header({
+  search,
+  onSearch,
+  onRandom,
+  showOnlyFavorites,
+  onToggleFavoritesFilter,
+  favoriteCount,
+  loadedCount,
+  totalCount,
+}: HeaderProps) {
   return (
     <header className="flex items-center gap-3 border-b border-[#1e2038] bg-[#0a0b15] px-4 py-3">
       <div className="flex min-w-0 items-center gap-2">
@@ -33,6 +46,26 @@ export default function Header({ search, onSearch, loadedCount, totalCount }: He
           />
         </div>
       </div>
+
+      <button
+        onClick={onRandom}
+        className="shrink-0 px-3 py-1.5 text-sm font-semibold text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+        title="Select a random Pokémon"
+      >
+        🎲 Random
+      </button>
+
+      <button
+        onClick={() => onToggleFavoritesFilter(!showOnlyFavorites)}
+        className={`shrink-0 px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
+          showOnlyFavorites
+            ? 'bg-red-600 text-white hover:bg-red-700'
+            : 'bg-[#2a2d4a] text-slate-200 hover:bg-[#3a3d5a]'
+        }`}
+        title={showOnlyFavorites ? 'Show all Pokémon' : 'Show only favorites'}
+      >
+        ❤️ {favoriteCount}
+      </button>
 
       <div className="shrink-0 text-right">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Loaded</p>

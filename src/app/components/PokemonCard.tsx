@@ -6,12 +6,16 @@ interface Props {
   pokemon: Pokemon;
   isSelected?: boolean;
   onClick?: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 export default function PokemonCard({
   pokemon,
   isSelected = false,
   onClick,
+  isFavorite = false,
+  onToggleFavorite,
 }: Props) {
   const spriteUrl = pokemon.sprites.front_default ?? pokemon.sprites.other['official-artwork'].front_default;
 
@@ -26,7 +30,16 @@ export default function PokemonCard({
     >
       <div className="mb-1 flex items-start justify-between">
         <span className="text-[10px] text-slate-600 font-mono">#{String(pokemon.id).padStart(3, '0')}</span>
-        <span className="text-[10px] uppercase tracking-wider text-slate-500">Starter</span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite?.();
+          }}
+          className="text-lg hover:scale-125 transition-transform"
+          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          {isFavorite ? '❤️' : '🤍'}
+        </button>
       </div>
 
       <div className="flex justify-center items-center h-24 mb-2">
